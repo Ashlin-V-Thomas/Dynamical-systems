@@ -1,4 +1,7 @@
+import numpy as np
 import matplotlib.pyplot as plt
+np.seterr(divide='ignore', invalid='ignore')
+
 #Setting the axes
 plt.figure(1)
 plt.axhline(y=0 , color="black")
@@ -37,11 +40,12 @@ def scalar_multiply(intuple,c):
     #This function takes a vector in R^2 and a scalar and returns the scalar multiple of that vector.
     return (intuple[0]*c,intuple[1]*c)
 
+sign1 = interactions[interaction][0]
+sign2 = interactions[interaction][1]
+
 def g(intuple):
     # g is a function, g: R^2 --> R^2
-    global r1,a1,k1,r2,a2,k2,interactions,interaction
-    sign1 = interactions[interaction][0]
-    sign2 = interactions[interaction][1]
+    global r1,a1,k1,r2,a2,k2,sign1,sign2
     x = intuple[0]
     y = intuple [1]
     if sign1>0:
@@ -91,13 +95,79 @@ def trajectory(f,initial_condition,final_time,lower_limit, upper_limit):
         t = T[len(T)-1]
     return [X,Y]
 
+
+N1_0 = int(input("Enter the initial value of population 1 = "))
+N2_0 = int(input("Enter the initial value of population 2 = "))
+final_time = float(input("Enter the final time upto which the population growth has to be simulated = "))
+
+def graph_N1_t(f,initial_condition,final_time):
+    # The function graphs the x-t curve.
+    t= initial_condition[1]
+    X = []
+    T = []
+    while t<=final_time:
+        temp = runge_kutta_solve(f,initial_condition,t)
+        T.append(t)
+        X.append(temp[0])
+        t+=0.01
+    plt.figure(1)
+    plt.plot(T,X)
+    plt.xlabel("t")
+    plt.ylabel("N_1")
+    plt.title("N_1 - t graph")
+    plt.show()
+
+graph_N1_t(g,((N1_0,N2_0),0),final_time)
+
+def graph_N2_t(f,initial_condition,final_time):
+    # The function graphs the x-t curve.
+    t= initial_condition[1]
+    Y = []
+    T = []
+    while t<=final_time:
+        temp = runge_kutta_solve(f,initial_condition,t)
+        T.append(t)
+        Y.append(temp[1])
+        t+=0.01
+    plt.figure(2)
+    plt.plot(T,Y)
+    plt.xlabel("t")
+    plt.ylabel("N_2")
+    plt.title("N_2 - t graph")
+    plt.show()
+
+graph_N2_t(g,((N1_0,N2_0),0),final_time)
+
+sign1 = interactions[interaction][0]
+sign2 = interactions[interaction][1]
+
+plt.figure(3)
+plt.axhline(y=0 , color="black")
+plt.axvline(x=0, color = "black")
 def graph_phase_portrait(f):
-    global k1,k2
+    global k1,k2,sign1,sign2
+    max1 = int(1.5*max([k1,k2]))
+    Xn , Yn = np.meshgrid(np.linspace(0,max1,25), np.linspace(0,max1,25))
+    if sign1>0:
+        sign11 = sign1*(1-Xn/k1)
+    else:
+        sign11 = sign1
+    if sign2>0:
+        sign21 = sign2*(1-Yn/k2)
+    else:
+        sign21 = sign2
+    U = r1*Xn*(1-Xn/k1)+sign11*Xn*Yn*a1
+    V = r2*Yn*(1 - Yn/k2) + sign21*Xn*Yn*a2
+
+    N = np.sqrt(U**2 + V**2)
+    U = U/N
+    V = V/N
+
+    plt.quiver(Xn,Yn,U,V)
     initials = [] #List of initial conditions of the form (x(0),y(0)).
     #If you want, you can manually add the required initial conditions to the above list, if you are interested in trajectories with that initial condition.
-    max1 = int(1.5*max([k1,k2]))
-    for i in range(0,max1,int(max1/10)):
-        for j in range(0,max1, int(max1/10)):
+    for i in range(1,max1+1,int(max1/6.5)):
+        for j in range(1,max1+1, int(max1/6.5)):
             initials.append((i,j))
     for i in initials:
         out = trajectory(f,(i,0),5,0,max1)
